@@ -59,6 +59,11 @@ td {
   word-wrap: break-word;
 }
 
+.btn-flat {
+  background-color:white;
+  color: black;
+}
+
 /**
  * LAYOUT:
  * *******
@@ -74,6 +79,8 @@ body {
 }
 #app-root,
 .sigma-container {
+  /* width: 100%;
+  height: 100%; */
   position: absolute;
   inset: 0;
 }
@@ -132,6 +139,13 @@ div.ico > button > * {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+}
+
+div.settings {
+  display: flex;
+  width: fit-content;
+  vertical-align: middle;
+  flex-direction: column;
 }
 
 button.btn {
@@ -266,8 +280,13 @@ ul > li {
   right: 10px;
   top: 10px;
   width: 350px;
-
 }
+
+#graph-selector {
+  display: inline-block;
+  width: fit-content;
+}
+
 .search-wrapper > input[type="search"] {
   width: calc(100%);
   height: 3em;
@@ -330,4 +349,119 @@ ul > li {
   button.hide-contents {
     display: none !important;
   }
+}
+
+circle {
+
+  fill-opacity: .25;
+  stroke: rgb(114, 187, 240);
+  stroke-width: 1px;
+}
+
+circle:hover {
+  fill-opacity: .25;
+  stroke: rgb(31, 119, 180);
+  stroke-width: 2px;
+  opacity: 1;
+}
+
+.leaf circle {
+  fill-opacity: 1;
+  /* fill: white; */
+}
+
+text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+svg {
+  pointer-events: all;
+}
+
+
+/**
+ * cytoscape nodehtml:
+ * ***************
+ */
+ .group {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.group.hide {
+  display: none;
+}
+
+.group.show {
+  display: inline-flex;
+}
+
+.element {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icon {
+  mask-size: cover;
+  -webkit-mask-size: cover;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+}
+
+.element-graphic {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  background: #a3d5d0;
+}
+
+.group-graphic > .icon {
+  background: #a3d5d0;
+}
+.element-node_num {
+  position: absolute;
+  border-radius: 50%;
+  margin-left: -36px;
+  margin-top: -4px;
+  z-index: 999;
+}
+
+.element-graphic.hover > .overlay {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: #000000;
+  opacity: 0.3;
+  border-radius: 50%;
+}
+
+.group-graphic.hover > .overlay {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: #000;
+  opacity: 0.3;
+  border-radius: 3px;
+  border: 1px solid rgb(0, 0, 0, 0.3);
+}
+
+.icon-clique {
+  mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_star.svg);
+  -webkit-mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_star.svg);
+}
+.icon-fan {
+  mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_sector.svg);
+  -webkit-mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_sector.svg);
+}
+
+.icon-connector {
+  mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_diamond.svg);
+  -webkit-mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_diamond.svg);
 }

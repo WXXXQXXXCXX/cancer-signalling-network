@@ -1,3 +1,5 @@
+import { internal } from "neo4j-driver-core";
+
 export interface NodeData {
   id: string;
   label: string;
@@ -5,13 +7,29 @@ export interface NodeData {
   x: number;
   y: number;
   size: number;
-  attributes: any
+  inViewport?:boolean;
+  attributes: Attributes;
 }
 
 export interface EdgeData {
   source: string;
   target: string;
   color: string;
+  type: string;
+  inViewport?:boolean;
+  attributes?: EdgeAttributes; 
+}
+
+export interface Attributes {
+  isDrugTarget?: boolean;
+  isOncogene?: boolean;
+  pathwayLevel?: number;
+  expanded?: boolean;
+  
+}
+
+export interface EdgeAttributes {
+  category: string;
 }
 
 export interface Cluster {
@@ -75,4 +93,44 @@ export interface Oncogene {
   synonyms: string;
   tier: string;
   translocation_partner: string;
+}
+
+export interface ResNode {
+  identity: number;
+  labels: string[];
+  properties: ResNodeProp;
+}
+
+export interface ResNodeProp {
+  name: string;
+  isDrugTarget: boolean;
+  entrez_id: string;
+}
+
+export interface ResEdge {
+  identity: number;
+  start: number;
+  end: number;
+  type: string;
+  properties: ResEdgeProp;
+}
+
+export interface ResEdgeProp {
+
+}
+
+export interface Pathway {
+  id: string;
+  name: string;
+}
+
+export interface GraphOps{
+  edge_type: string;
+  view_by: string;
+}
+
+export interface PathwayTree {
+  id: string;
+  name:string;
+  children: PathwayTree[];
 }
