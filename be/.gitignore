@@ -1,0 +1,6 @@
+./PPRVizS/*.pyc
+./PPRVizS/__pycache__
+./approx_dnppr/.idea
+./louvain/.idea
+.idea
+.DS_Store
