@@ -20,6 +20,7 @@ export const PHY_COLOR = "rgba(39, 118, 245, 0.8)";
 export const POS_COLOR = "rgba(60,179,113, 0.8)";
 export const NEG_COLOR = "rgba(255, 40, 0, 0.8)";
 export const NODE_COLOR = "rgba(0, 120, 170, 1)" ;
+export const NODE_HIGHLIGHT_COLOR = "rgba(220,20,60,1)"
 export const NODE_FADE_COLOR = "rgba(20, 20, 20, 0.1)";
 export const NODE_HIDE_COLOR = "rgba(40, 40, 40, 0.2)";
 export const PATHWAY_NODE_COLOR = ['rgba(133, 14, 53, 0.7)','rgba(238, 105, 131, 0.7)','rgba(255, 196, 196, 0.7)'];
@@ -39,12 +40,12 @@ export const hallmarks: {[key: number]:string}= {
     1: 'evade growth repressor',
     2: 'resist cell death',
     3: 'enable replicative immortality',
-    4: 'Induce angiogenesis',
-    5: 'Activate invasion & metastasis',
-    6: 'Reprogramme energy metabolism',
-    7: 'Sustaining proliferative signs',
-    8: 'Genome instability',
-    9: 'Tumor promoting inflammation',
+    4: 'induce angiogenesis',
+    5: 'activate invasion & metastasis',
+    6: 'reprogramme energy metabolism',
+    7: 'evade immune destruction',
+    8: 'genome instability',
+    9: 'tumor promoting inflammation',
 };
 
 export const hallmarks_color: {[key: number]:string}= {
@@ -59,6 +60,8 @@ export const hallmarks_color: {[key: number]:string}= {
     8: '#bc6c25',
     9: '#70e000',
 };
+
+
 
 
 export const SCALE_LINEAR = 0;

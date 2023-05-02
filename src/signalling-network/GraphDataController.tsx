@@ -1,9 +1,8 @@
 import { useSigma } from "react-sigma-v2";
 import { FC, useEffect } from "react";
 import { Dataset, EdgeData, GraphOps, NodeData  } from "../types";
-
 import FA2Layout from "graphology-layout-forceatlas2/worker";
-import { GetSubGraphWithLabel } from "../db/db_conn";
+import { GetSignallingNetwork, GetSubGraphWithLabel } from "../db/db_conn";
 import { NEG_COLOR, NODE_COLOR, PATHWAY_V_EDGE_COLOR, PATHWAY_NODE_COLOR, PHY_COLOR, POS_COLOR, PATHWAY_H_EDGE_COLOR, PATHWAY_NODE_SIZE } from "./consts";
 
 const GraphDataController: FC<{ 
@@ -54,50 +53,83 @@ const GraphDataController: FC<{
 
   const loadCompleteGeneGraph = () => {
     graph.clear();
-      fetch(`${process.env.PUBLIC_URL}/wg1.json`)
-      .then((res) => res.json())
-      .then((dataset: Dataset) => {
-        dataset.nodes.forEach((node) =>{
-            graph.addNode(node.id,{
-              ...node,
-              label: node.id,
-              hidden: true,
-              size: 3,
-              color: NODE_COLOR,
-              ori_color: NODE_COLOR,
-              inViewport: true,
-              tag: [],
-            })
-        });
-        dataset.edges.forEach((edge) => {
-          addEdge({...edge, inViewport: true, type:(edge.attributes?.category||"").toUpperCase()});
-        });
-        fetch(`${process.env.PUBLIC_URL}/stat.csv`)
-      .then((res) => res.text())
-      .then((data) => {
-        var lines = data.split("\n");
-        const headers = lines[0].split(',').slice(2);
-        lines = lines.slice(1);
-        for(let i=0; i<lines.length; i++){
-          const line = lines[i];
-          var fields = line.split(',');
-          const node = fields[1];
-          fields = fields.slice(2);
-          var stats: {[key:string]:number;}={}
-          for(let i=0; i<fields.length; i++){
-            stats[headers[i].trim()]=Number(fields[i]);
-          }
-          try{
-            graph.mergeNodeAttributes(node, stats);
-          } catch (error){
-            console.log(error);
-          }
+    // fetch(`${process.env.PUBLIC_URL}/wg1.json`)
+    // .then((res) => res.json())
+    // .then((dataset: Dataset) => {
+    //   dataset.nodes.forEach((node) =>{
           
+    //       graph.addNode(node.id,{
+    //         ...node,
+    //         label: node.id,
+    //         hidden: true,
+    //         size: 3,
+    //         color: NODE_COLOR,
+    //         tag: [],
+    //       })
+    //   });
+    //   dataset.edges.forEach((edge) => {
+    //     addEdge({...edge, inViewport: true, type:(edge.attributes?.category||"").toUpperCase()});
+    //   });
+    //   requestAnimationFrame(() =>{setDataReady(true)});
+    //   console.log('graph loaded', graph.nodes.length)
+    
+    // });
+    GetSignallingNetwork((records) => {
+      records.forEach((record) => {
+        graph.updateNode(record.get(0), (attr)=>{
+          return {
+              label: record.get(0),
+              color: NODE_COLOR,
+              hidden:true,
+              size: 3,
+              x: Number(record.get(1)),
+              y: Number(record.get(2))
+          }
+        });
+
+        graph.updateNode(record.get(4), (attr)=>{
+            return {
+                label: record.get(4),
+                color: NODE_COLOR,
+                hidden:true,
+                size: 3,
+                x: Number(record.get(5)),
+                y: Number(record.get(6))
+            }
+        })
+
+        if(record.get(3) == 'phy'){
+          graph.mergeUndirectedEdge(record.get(0), record.get(4), 
+            {
+              color: PHY_COLOR, 
+              weight: 0.5, 
+              category: 'PHY', 
+              hidden: true
+            }
+          )
+        } else if(record.get(3) == 'pos'){
+          graph.mergeDirectedEdge(record.get(0), record.get(4), 
+            {
+              color: POS_COLOR, 
+              weight: 0.5, 
+              category: 'POS', 
+              hidden: true
+            }
+          )
+        } else{
+          graph.mergeDirectedEdge(record.get(0), record.get(4), 
+            {
+              color: NEG_COLOR, 
+              weight: 0.5, 
+              category: 'NEG', 
+              hidden: true
+            }
+          )
         }
-        requestAnimationFrame(() =>{setDataReady(true)});
-      });
-      });
-      
+      })
+
+      requestAnimationFrame(() =>{setDataReady(true)});
+    }) 
     
       
   }

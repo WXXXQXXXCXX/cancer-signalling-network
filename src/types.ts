@@ -59,6 +59,7 @@ export interface NodeAttributes {
   entrez_id: string;
   drugs: Drug[];
   oncogene?: Oncogene;
+  hallmarks: string[]|null;
 }
 
 

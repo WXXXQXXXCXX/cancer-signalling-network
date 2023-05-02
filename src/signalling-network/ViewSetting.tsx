@@ -35,8 +35,8 @@ const ViewSetting: React.FC<{viewBy: string[], edgeType: string, statType: strin
     }, [])
 
     const handleItemSelect = (e:React.SyntheticEvent, idx: string[]) => {
-        idx = idx.filter((v, i)=>v!="root"&&v.length>1)
-        setStatType("")
+        
+        idx = idx.filter((v, i)=>v!="root"&& v!='hallmark'&&v.length>1)
         setViewBy(idx);
     }
     const handleStatChange = () => {
@@ -78,58 +78,64 @@ const ViewSetting: React.FC<{viewBy: string[], edgeType: string, statType: strin
                     </Button>
                 </FormControl>
             </form>
-            <form onSubmit = {(e)=>{
+            {
+                edgeType != ''?
+                <>
+                <form onSubmit = {(e)=>{
                 e.preventDefault();
                 handleStatChange();
-            }}>
-                <FormControl sx={{ m: 3 }} variant="standard">
-                    <FormLabel id="stat">Network Properties</FormLabel>
-                    <RadioGroup
-                    name="networkStat"
-                    value={statVal}
-                    onChange={(e)=>{setStatVal(e.target.value)}}
-                    >
-                    <FormControlLabel value="In_Degree" control={<Radio />} label="In Degree" />
-                    <FormControlLabel value="Out_Degree" control={<Radio />} label="Out Degree" />
-                    <FormControlLabel value="Degree" control={<Radio />} label="Degree" />
-                    <FormControlLabel value="Degree_Centrality" control={<Radio />} label="Degree Centrality" />
-                    <FormControlLabel value="Closeness_Centrality" control={<Radio />} label="Closeness Centrality" />
-                    <FormControlLabel value="Eigenvector_Centrality" control={<Radio />} label="Eigenvector Centrality" />
-                    <FormControlLabel value="Betweenness_Centrality" control={<Radio />} label="Betweenness Centrality" />
-                    <FormControlLabel value="Pagerank" control={<Radio />} label="Pagerank" />
-                    </RadioGroup>
-                    <Button sx={{ mt: 1, mr: 1 }} type="submit" variant="outlined">
-                    Load Property
-                    </Button>
-                </FormControl>
-            </form>
-            <TreeView
-                defaultCollapseIcon={<MinusSquare />}
-                defaultExpandIcon={<PlusSquare />}
-                defaultEndIcon={<CloseSquare />}
-                sx={{ maxHeight: 700, flexGrow: 1, maxWidth: 320, overflowY: 'auto' }}
-                multiSelect
-                onNodeSelect={handleItemSelect}
-            >
-                <StyledTreeItem nodeId="2" label="View">
-                    <StyledTreeItem nodeId={"cancer_gene"} label="Cancer genes" />
-                    <StyledTreeItem nodeId={"drug_targets"} label="Drug targets" />
-                    {tree}
-                    <StyledTreeItem nodeId={"all"} label="All" />
-                    <StyledTreeItem nodeId="hallmark" label="Hallmarks" >
-                        <StyledTreeItem nodeId='hallmark_0' label='promote proliferation' />
-                        <StyledTreeItem nodeId='hallmark_1' label='evade growth repressor' />
-                        <StyledTreeItem nodeId='hallmark_2' label='resist cell death' />
-                        <StyledTreeItem nodeId='hallmark_3' label='enable replicative immortality' />
-                        <StyledTreeItem nodeId='hallmark_4' label='Induce angiogenesis' />
-                        <StyledTreeItem nodeId='hallmark_5' label='Activate invasion & metastasis' />
-                        <StyledTreeItem nodeId='hallmark_6' label='Reprogramme energy metabolism' />
-                        <StyledTreeItem nodeId='hallmark_7' label='Evade immune destruction' />
-                        <StyledTreeItem nodeId='hallmark_8' label='Genome instability' />
-                        <StyledTreeItem nodeId='hallmark_9' label='Tumor promoting inflammation' />
+                }}>
+                    <FormControl sx={{ m: 3 }} variant="standard">
+                        <FormLabel id="stat">Network Properties</FormLabel>
+                        <RadioGroup
+                        name="networkStat"
+                        value={statVal}
+                        onChange={(e)=>{setStatVal(e.target.value)}}
+                        >
+                        <FormControlLabel value="In_Degree" control={<Radio />} label="In Degree" />
+                        <FormControlLabel value="Out_Degree" control={<Radio />} label="Out Degree" />
+                        <FormControlLabel value="Degree" control={<Radio />} label="Degree" />
+                        <FormControlLabel value="Degree_Centrality" control={<Radio />} label="Degree Centrality" />
+                        <FormControlLabel value="Closeness_Centrality" control={<Radio />} label="Closeness Centrality" />
+                        <FormControlLabel value="Eigenvector_Centrality" control={<Radio />} label="Eigenvector Centrality" />
+                        <FormControlLabel value="Betweenness_Centrality" control={<Radio />} label="Betweenness Centrality" />
+                        <FormControlLabel value="Pagerank" control={<Radio />} label="Pagerank" />
+                        </RadioGroup>
+                        <Button sx={{ mt: 1, mr: 1 }} type="submit" variant="outlined">
+                        Load Property
+                        </Button>
+                    </FormControl>
+                </form>
+                <TreeView
+                    defaultCollapseIcon={<MinusSquare />}
+                    defaultExpandIcon={<PlusSquare />}
+                    defaultEndIcon={<CloseSquare />}
+                    sx={{ maxHeight: 700, flexGrow: 1, maxWidth: 320, overflowY: 'auto' }}
+                    multiSelect
+                    onNodeSelect={handleItemSelect}
+                >
+                    <StyledTreeItem nodeId="2" label="View">
+                        <StyledTreeItem nodeId={"cancer_gene"} label="Cancer genes" />
+                        <StyledTreeItem nodeId={"drug_targets"} label="Drug targets" />
+                        {tree}
+                        <StyledTreeItem nodeId={"all"} label="All" />
+                        <StyledTreeItem nodeId="hallmark" label="Hallmarks" >
+                            <StyledTreeItem nodeId='hallmark_0' label='promote proliferation' />
+                            <StyledTreeItem nodeId='hallmark_1' label='evade growth repressor' />
+                            <StyledTreeItem nodeId='hallmark_2' label='resist cell death' />
+                            <StyledTreeItem nodeId='hallmark_3' label='enable replicative immortality' />
+                            <StyledTreeItem nodeId='hallmark_4' label='Induce angiogenesis' />
+                            <StyledTreeItem nodeId='hallmark_5' label='Activate invasion & metastasis' />
+                            <StyledTreeItem nodeId='hallmark_6' label='Reprogramme energy metabolism' />
+                            <StyledTreeItem nodeId='hallmark_7' label='Evade immune destruction' />
+                            <StyledTreeItem nodeId='hallmark_8' label='Genome instability' />
+                            <StyledTreeItem nodeId='hallmark_9' label='Tumor promoting inflammation' />
+                        </StyledTreeItem>
                     </StyledTreeItem>
-                </StyledTreeItem>
-            </TreeView>
+                </TreeView>
+                </>:<></>
+            }
+            
             
         </Panel>
     );

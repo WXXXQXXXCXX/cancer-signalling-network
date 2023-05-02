@@ -3,6 +3,7 @@ import React, { FC, useMemo, useState } from "react";
 import { AgChartsReact } from 'ag-charts-react';
 import { useSigma } from "react-sigma-v2";
 import { SCALE_LINEAR, SCALE_LOG } from "./consts";
+import { GetStats } from "../db/db_conn";
 
 const BIN = 30;
 const DiagramModal: FC<{
@@ -17,57 +18,50 @@ const DiagramModal: FC<{
     const [graphType, setGraphType] = useState("");
     const [scale, setScale] = useState(SCALE_LINEAR);
     const [interval, setInterval] = useState(0);
+    const [chartData, setChartData] = useState<any[]>([])
     const shouldIncreaseScale =() => {
       return !(attributeName == 'In_Degree' ||
       attributeName == 'Out_Degree' ||
       attributeName == 'Degree' ||
       attributeName == 'PDist')
     }
-    const data = useMemo(()=>{
-        var data:any[] = [];
-        
-        if(!shouldIncreaseScale()){
-          graph.forEachNode((node, attr) => {
-            const val = Reflect.get(attr, graphType+attributeName);
-            if (val!=undefined){
-              data.push( Reflect.get(attr, graphType+attributeName))
-            }
 
-          })
-        } else{
-          graph.forEachNode((node, attr) => {
-            const val = Reflect.get(attr, graphType+attributeName);
-            if (val!=undefined){
-              data.push(Reflect.get(attr, graphType+attributeName)*1000)
-            }
-
-          })
-        }
-          
-        data = data.sort((a, b) => a - b);
-        const max: number = data[data.length - 1];
-        const min: number = data[0];
-        const itv = (max - min)/BIN;
-        console.log(max, min, BIN, (max-min),(max-min)/BIN);
-        setInterval(itv);
-
-        const res: any[] = [];
-        for(let i=0; i<BIN; i++){
-          res.push({key: min+itv*i, value: 0});
-        }
-
-        for(let i=0; i<data.length; i++){
-          const b = Math.floor((data[i] - min)/itv);
-
-          res[Math.min(b, BIN-1)].value ++;
-        }
-        if(scale == SCALE_LOG){
-          for(let i=0; i<res.length; i++){
-            res[i].value = Math.log2(res[i].value);
+    React.useEffect(()=>{
+      if(graphType=='' || attributeName==''){
+        return;
+      }
+      GetStats(
+        graphType+attributeName, 
+        (data) => {
+          if(shouldIncreaseScale()){
+            data = data.map(x=>x*1000);
           }
+          data = data.sort((a, b) => a - b);
+          const max: number = data[data.length - 1];
+          const min: number = data[0];
+          const itv = (max - min)/BIN;
+          setInterval(itv);
+
+          const res: any[] = [];
+          for(let i=0; i<BIN; i++){
+            res.push({key: min+itv*i, value: 0});
+          }
+
+          for(let i=0; i<data.length; i++){
+            const b = Math.floor((data[i] - min)/itv);
+            console.log(Math.min(b, BIN-1));
+            res[Math.min(b, BIN-1)].value ++;
+          }
+          if(scale == SCALE_LOG){
+            for(let i=0; i<res.length; i++){
+              res[i].value = Math.log2(res[i].value);
+            }
+          }
+          setChartData(res);
         }
-        console.log(res);
-        return res;
+      )
+
+        
     }, [graph, attributeName, graphType, scale]);
 
     const onGraphTypeChange = (event: SelectChangeEvent) => {
@@ -85,7 +79,7 @@ const DiagramModal: FC<{
           title: {
             text: attributeName,
           },
-          data: data,
+          data: chartData,
           series: [
             {
               type: 'column',
@@ -169,11 +163,11 @@ const DiagramModal: FC<{
                   </Select>
               </FormControl>
               <FormControl variant="standard" sx={{ m: 1, width: 200 }}>
-                  <InputLabel id="demo-simple-select-standard-label">Scale</InputLabel>
+                  <InputLabel id="select-scale">Scale</InputLabel>
                   <Select 
-                  value={graphType} 
+                  value={scale} 
                   onChange={(e)=>{setScale(Number(e.target.value))}} 
-                  label="Property"
+                  label="Scale"
                   autoWidth>
                     <MenuItem value={SCALE_LINEAR}>linear</MenuItem>
                     <MenuItem value={SCALE_LOG}>log</MenuItem>

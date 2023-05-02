@@ -38,7 +38,6 @@ const SearchField: FC<{ filters: FiltersState }> = ({ filters }) => {
     graph.setNodeAttribute(selected, "color", "#EE5050");
     graph.setNodeAttribute(selected, "highlighted", true);
     graph.forEachEdge(selected, (edge, attributes, source, target, sourceAttributes, targetAttributes) => {
-      console.log(source, target, edge);
       graph.setEdgeAttribute(edge, "zIndex", 1);
       graph.setEdgeAttribute(edge, "weight", 1.5);
       if(source == selected){

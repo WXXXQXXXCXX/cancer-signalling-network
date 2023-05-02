@@ -25,7 +25,8 @@ const GraphOverview:FC<{
     }
 
     const content:any[] = useMemo(()=>{
-        console.log(edgeType, viewBy, statType, statFilter);
+        // console.log(edgeType, viewBy, statType, statFilter);
+        const t1 = performance.now()
         const node_count = graph.filterNodes((node, attr)=>!attr.hidden && attr.color!=NODE_FADE_COLOR).length;
         const edge_count = graph.filterEdges((edge, attributes)=>{ return !attributes.hidden}).length;
         const pos_edge_count = graph.filterDirectedEdges(
@@ -47,37 +48,45 @@ const GraphOverview:FC<{
                 const tag = viewBy[i];
                 switch (tag){
                     case 'cancer_gene':
-                        const cancer_count = graph.filterNodes(
-                            (node, attr)=>!attr.hidden&&attr.tag?.includes('cancer_gene')
-                        ).length;
-                        children.push(createRow('#cancer gene', cancer_count));
+                        // const cancer_count = graph.filterNodes(
+                        //     (node, attr)=>!attr.hidden&&attr.tag?.includes('cancer_gene')
+                        // ).length;
+                        // children.push(createRow('#cancer gene', cancer_count));
+                        tags.push(<p>Cancer genes</p>);
                         break;
                     case 'drug_targets':
-                        const drug_count = graph.filterNodes(
-                            (node, attr)=>!attr.hidden&&attr.tag?.includes('drug_targets')
-                        ).length;
-                        children.push(createRow('#drug targets', drug_count));
+                        // const drug_count = graph.filterNodes(
+                        //     (node, attr)=>!attr.hidden&&attr.tag?.includes('drug_targets')
+                        // ).length;
+                        // children.push(createRow('#drug targets', drug_count));
+                        tags.push(<p>Drug targets</p>);
                         break;
                     default:
                         if(tag.substring(0,9)=='hallmark_'){
                             const idx:number = parseInt(tag.split('_')[1]);
-                            const count = graph.filterNodes(
-                                (node, attr)=>!attr.hidden &&(attr.hallmark & 2<<idx)!=0
-                            ).length;
+                            // const count = graph.filterNodes(
+                            //     (node, attr)=>!attr.hidden &&(attr.hallmark & 2<<idx)!=0
+                            // ).length;
                             
-                            children.push(createRow(hallmarks[idx], count));
+                            // children.push(createRow(hallmarks[idx], count));
+                            tags.push(<p>{hallmarks[idx]}</p>)
                         } else{
-                            const count = graph.filterNodes(
-                                (node, attr)=>!attr.hidden&&attr.tag?.includes(tag)
-                            ).length;
-                            children.push(createRow(tag, count));
+                            // const count = graph.filterNodes(
+                            //     (node, attr)=>!attr.hidden&&attr.tag?.includes(tag)
+                            // ).length;
+                            // children.push(createRow(tag, count));
+                            tags.push(<p>{tag}</p>)
                         }
                         
                 }
             }
+            if(tags.length>0){
+                children.push(createRow('Viewing', tags))
+            }
+            
             
         }
-        if(statFilter != undefined){
+        if(statFilter != undefined && (viewBy.includes('all') || viewBy.length == 0)){
             const stat = statFilter.filter_on.substring(1).split('_').join(' ');
             var min = statFilter.min;
             var max = statFilter.max;
@@ -87,16 +96,25 @@ const GraphOverview:FC<{
             if (max<1) {
                 max = Number.parseFloat(max).toExponential(3)
             }
-            children.push(createRow('Property filter', `${stat} in [ ${min}, ${max} ]`))
+            children.push(createRow('Centrality filter', `${stat} in [ ${min}, ${max} ]`))
         }
-        if(statType!=undefined){
-            children.push(
-                createRow('color/size', statType.substring(1).split('_').join(' '))
-            )
+        if(statType!=undefined && statType.length > 1 && (viewBy.includes('all') || viewBy.length == 0)){
+            var statName = statType;
+            if(statType==undefined){
+                statName = statFilter.filter_on;
+            }
+            if(statName!=undefined){
+                children.push(
+                    createRow('color/size', statName.substring(1).split('_').join(' '))
+                )
+            }
+            
         }
+        const t2 = performance.now()
+        console.log('GraohOverview useMemo update information took %s to complete', t2-t1);
         return children;
         
-    }, [update])
+    }, [anchorEl])
     return (
         <Popover
         open={Boolean(anchorEl)}

@@ -4,6 +4,7 @@ import StyledSlider from '../component/StyledSlider';
 import { assert } from 'console';
 import { useSigma } from 'react-sigma-v2';
 import { Box } from '@mui/material';
+import { GetStatBound } from '../db/db_conn';
 
 const PropertySlider: React.FC<{
     statType: string,
@@ -11,22 +12,26 @@ const PropertySlider: React.FC<{
 
     const sigma = useSigma();
     const graph = sigma.getGraph();
+    const [min, setMin] = React.useState(0);
+    const [max, setMax] = React.useState(1);
+    const [step, setStep] = React.useState(0.1);
+    const [vmin, setVMin] = React.useState(0);
+    const [vmax, setVMax] = React.useState(1);
 
-    const [min,max, step] = React.useMemo(()=>{
-        if(statType==undefined || statType == ""){
-            return [0,100,1];
-        }
-        const scores = graph.nodes().map((node) => {
-            const val = graph.getNodeAttribute(node, statType);
-            if(!val) return 0;
-            return val;
-          });
-        const min = Math.min(...scores);
-        const max = Math.max(...scores);
-        const scale = (max-min)/100;
-        console.log(min,max);
-        return [min, max, scale];
-    },[statType])
+    React.useEffect(()=>{
+        GetStatBound(
+            statType,
+            (min, max) => {
+                console.log("min and max for slider: ",min, max);
+                const scale = (max-min)/100;
+                setMin(min);
+                setMax(max);
+                setVMax(max);
+                setVMin(min);
+                setStep(scale);
+            })
+    }, [statType])
+
    
     
     return(
@@ -45,6 +50,8 @@ const PropertySlider: React.FC<{
                 if(typeof value == 'number'){
                     return;
                 }
+                setVMax(value[1]);
+                setVMin(value[0]);
                 setFilter({
                     min: value[0],
                     max: value[1],
@@ -56,6 +63,7 @@ const PropertySlider: React.FC<{
             step = {step}
             marks
             defaultValue={[min,max]}
+            value = {[vmin, vmax]}
             />
         </Box>
     )

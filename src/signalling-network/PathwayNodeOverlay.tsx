@@ -2,7 +2,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import React, { FC, useEffect, useState } from 'react';
 import { useSigma } from 'react-sigma-v2';
-import { GetNodesByPathwayId } from '../db/db_conn';
 import { PATHWAY_H_EDGE_COLOR, PATHWAY_H_EDGE_FADE_COLOR, PATHWAY_NODE_COLOR, PATHWAY_NODE_FADE_COLOR, PATHWAY_V_EDGE_COLOR, PATHWAY_V_EDGE_FADE_COLOR } from './consts';
 
 const PathwayNodeOverlay: FC<{

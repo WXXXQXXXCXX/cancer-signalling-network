@@ -379,24 +379,49 @@ svg {
   pointer-events: all;
 }
 
+/**
+ * subgraph layout:
+ * ***************
+ */
+ .fleft {
+  float: left;
+  width: 20%;
+  height: 90%;
+}
+
+.menu-container {
+  background-color: #f8f9fa;
+  margin: 2px;
+}
+
+.fright {
+  float: right;
+  height: 90%;
+  width: calc(80% - 4px);
+  /* count border wid*/
+  border: 2px solid #9cbfe5;
+  border-radius: 6px;
+}
+
+.slide {
+  bottom: 4px;
+  height: calc(10% - 6px);
+  width: calc(90% - 5px);
+  margin: 4px;
+  margin-left: 4px;
+}
+
 
 /**
  * cytoscape nodehtml:
  * ***************
  */
  .group {
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.group.hide {
-  display: none;
-}
-
-.group.show {
-  display: inline-flex;
-}
 
 .element {
   display: flex;
@@ -423,14 +448,35 @@ svg {
 }
 
 .group-graphic > .icon {
-  background: #a3d5d0;
+  background: #62AC00;
 }
+
+.group-graphic.faded > .icon {
+  background: #c4c4c4
+}
+
 .element-node_num {
+  font-size: 6px;
+  background-color: rgb(235, 235, 235, 1);
   position: absolute;
   border-radius: 50%;
   margin-left: -36px;
   margin-top: -4px;
   z-index: 999;
+}
+
+.element-label {
+  font-size: 16px;
+  color: #000000;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: rgba(255,255,255,0.7);
+  padding: 1px 6px;
+  margin-top: -2px;
+  transform: translateX(10%);
+  border-radius: 1px;
 }
 
 .element-graphic.hover > .overlay {
@@ -442,6 +488,16 @@ svg {
   border-radius: 50%;
 }
 
+.group-graphic {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  background: #a3d5d0;
+}
+
 .group-graphic.hover > .overlay {
   width: 100%;
   height: 100%;
@@ -451,6 +507,8 @@ svg {
   border-radius: 3px;
   border: 1px solid rgb(0, 0, 0, 0.3);
 }
+
+
 
 .icon-clique {
   mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_star.svg);
@@ -465,3 +523,19 @@ svg {
   mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_diamond.svg);
   -webkit-mask-image: url(/Users/qiaochuwang/Downloads/cancer-signalling-network/public/images/ic_diamond.svg);
 }
+
+.target-popper {
+  display: none;
+  max-width: 200px;
+  padding: 2px;
+  text-align: left;
+  border-radius: 0;
+  border: 1px solid #ccc;
+  background: #fff;
+  z-index: 2;
+}
+
+.target-popper.active {
+  display: block;
+}
+  

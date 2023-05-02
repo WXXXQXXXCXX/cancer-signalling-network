@@ -26,6 +26,7 @@ const NodeOverlay : FC<{
     }, [node])
 
     useEffect(() => {
+        const t1 = performance.now()
         if(node=="" || !node || hops == 0){
             sigma.setSetting(
                 "nodeReducer", 
@@ -69,7 +70,7 @@ const NodeOverlay : FC<{
             console.log(new_q);
             q = new_q;
         }
-        console.log(edges);
+        // console.log(edges);
         sigma.setSetting("nodeReducer", 
             (nd, data) => nodes.includes(nd)
                 ? { ...data, zIndex: 1 }
@@ -78,7 +79,8 @@ const NodeOverlay : FC<{
             (edge, data) => edges.includes(edge)
                 ? { ...data, color: graph.getEdgeAttribute(edge, "color"), size: 2 }
                 : { ...data, color: EDGE_FADE_COLOR, hidden: true });
-        
+        const t2 = performance.now()
+        // console.log('pathway n-hop neighbot took %s to complete', t2-t1)
     }, [hops]);
     
     const getAttr = () => {

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, Profiler, useEffect, useState } from "react";
 import { SigmaContainer, ZoomControl } from "react-sigma-v2";
 import getNodeProgramImage from "sigma/rendering/webgl/programs/node.image";
 import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
@@ -19,7 +19,7 @@ import { BsZoomIn, BsZoomOut } from "react-icons/bs";
 import NodeOverlay from "./NodeOverlay";
 import GenePathway from "./GenePathway";
 import ViewSetting from "./ViewSetting";
-import { IconButton, Tooltip } from "@mui/material";
+import { Backdrop, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import DiagramModal from "./DiagramModal";
 import CirclePack from "./PathwayGraph";
 import GraphOverview from "./GraphOverview";
@@ -27,6 +27,7 @@ import PropertySlider from "./PropertySlider";
 import Legend from "./Legend";
 import PathwayGraphOverlay from "./PathwayGraphOverlay";
 import Neighborhood from "./NeighborhoodModal";
+import GeneTargetsTable from "./GeneTargetsTable";
 
 
 const Root: FC = () => {
@@ -57,12 +58,17 @@ const Root: FC = () => {
     view_by:"",
     edge_type:"",
   });
+  const [geneSets, setGeneSets] = useState<any[]>([]);
+  const [geneSetSize, setGeneSetSize] = useState(0);
+  const [selectedGenes, setSelectedGenes] = useState<string[]>([]);
   
   useEffect(() => {
     function checkPathway() {
       const item = window.localStorage.getItem('pathway')
       console.log(item)
       if (item) {
+        setDataFilter(null);
+        setStatType('');
         setViewBy([item]);
       }
     }
@@ -73,6 +79,14 @@ const Root: FC = () => {
       window.removeEventListener('storage', checkPathway)
     }
   },[])
+
+  useEffect(() => {
+    if(edgeType != ''){
+      setViewBy([]);
+      setStatType('');
+      setDataFilter(null);
+    }
+  }, [edgeType])
 
   const onDialogClose = () => {
     setShowDialog(false);
@@ -121,6 +135,7 @@ const Root: FC = () => {
 
   return (
     <div id="app-root" className={""}>
+      
       <SigmaContainer
         graphOptions={{ allowSelfLoops: true, multi: true }}
         initialSettings={{
@@ -146,27 +161,36 @@ const Root: FC = () => {
         handleClickAway = {handleClickAway}/>
       
         <GraphDataController dataset={dataset} graphOps={graphOps} setDataReady = {setDataReady}/>
-        <GraphSettingsController
-        statFilter={dataFilter}
-        statType={statType}
-        hoveredNode={hoveredNode} 
-        viewBy={viewBy}
-        edgeType={edgeType}
-        showDrugTarget={showTargets}
-        graphLoaded={dataReady}
-        dataset={dataset}
-        updateCallback={setUpdate}/>
 
-        {statType!=undefined && statType != ''?<PropertySlider
-        statType = {statType}
-        setFilter={setDataFilter}
-        />:<></>}
+        <GraphSettingsController
+          statFilter={dataFilter}
+          statType={statType}
+          geneSets={selectedGenes}
+          hoveredNode={hoveredNode} 
+          viewBy={viewBy}
+          edgeType={edgeType}
+          showDrugTarget={showTargets}
+          graphLoaded={dataReady}
+          dataset={dataset}
+          updateCallback={setUpdate}/>
+
+        {
+          statType!=undefined && statType != ''?<PropertySlider
+          statType = {statType}
+          setFilter={setDataFilter}
+          />:<></>
+        }
         <DiagramModal 
         open={showDialog} 
         onClose={onDialogClose}
-        setFilter={setDataFilter} />
+        setFilter={(v) => {
+          setDataFilter(v);
+          setViewBy([]);
+        }} />
         <Neighborhood
         open={showNeighborhoodModal}
+        setGenePairs={setGeneSets}
+        setSetSize={setGeneSetSize}
         onClose={()=>{
           setShowNeighborhoodModal(false)
         }} />
@@ -263,6 +287,7 @@ const Root: FC = () => {
                 <RestartAltIcon />
               </IconButton>
               </Tooltip>
+
               <Tooltip title="Subnetwork" placement="top">
                 <IconButton
                 sx={{position:"fixed", right:"580px", top:"10px", border:2}}
@@ -273,21 +298,58 @@ const Root: FC = () => {
                   <HighlightAltIcon />
                 </IconButton>
               </Tooltip>
+
               <SearchField filters={filtersState} />
+
               <Legend viewBy = {viewBy}/>
-              <div className="panels">
-                <ViewSetting 
-                viewBy={viewBy} 
-                edgeType={edgeType}
-                statType={statType} 
-                setViewBy={setViewBy} 
-                setStatType={setStatType}
-                setEdgeType={setEdgeType}/>
-                <Attributes attr={attr}/>
-                <GenePathway pathway={pathways}/>
-              </div>
+
+              {
+                dataReady? 
+                <div className="panels">
+                  <ViewSetting 
+                  viewBy={viewBy} 
+                  edgeType={edgeType}
+                  statType={statType} 
+                  setViewBy={(v) => {
+                    setViewBy(v);
+                    setDataFilter(null);
+                    setStatType("")
+                  }} 
+                  setStatType={(v) => {
+                    setStatType(v);
+                    setDataFilter(null);
+                    setViewBy([]);
+                  }}
+                  setEdgeType={setEdgeType}/>
+                  <Attributes attr={attr}/>
+                  <GenePathway pathway={pathways}/>
+                  {
+                    geneSets.length!=0?
+                    <GeneTargetsTable
+                    geneSets={geneSets}
+                    k={geneSetSize}
+                    onRowClick={(rows: number[])=>{
+                      const genes: string[] = []
+                      for(let i of rows){
+                        for(let j=0; j<geneSetSize; j++){
+                          genes.push(geneSets[i][j]);
+                        }
+                      }
+                      console.log("update selectedGenes: ", genes)
+                      setSelectedGenes(genes);
+                    }} />
+                    :<></>
+                  }
+                </div>:<></>
+              }
+              
             </div>
           </>
+          <Backdrop
+          open={!dataReady}
+          sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+            <CircularProgress color="inherit"/>
+          </Backdrop>
         
       </SigmaContainer>
     </div>

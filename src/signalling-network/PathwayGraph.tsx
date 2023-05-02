@@ -10,6 +10,7 @@ import useDebounce from '../use-debounce';
 import TreeItem from '@mui/lab/TreeItem';
 import { CloseSquare, MinusSquare, PlusSquare } from '../component/StyledTree';
 import TreeView from '@mui/lab/TreeView';
+import { GetPathwayCirclePack, GetPathwayLinks } from '../db/db_conn';
 
 
 const CirclePack:React.FC<{
@@ -24,14 +25,15 @@ const CirclePack:React.FC<{
     const padding = 0;
 
     const ref = React.useRef(null);
+    const ref_tooltip = React.useRef(null);
     const [data, setData] = React.useState<any>();
     const [nodes, setNodes] = React.useState<any>();
     const [names, setNames] = React.useState<{[key:string]:string}>({});
-    const [links, setLinks] = React.useState<{[key: string]: string[]}>({});
+    //const [links, setLinks] = React.useState<{[key: string]: string[]}>({});
     const [selected, setSelected] = React.useState<string[]>([]);
     const [expanded, setExpanded] = React.useState<string[]>(['root']);
-    const [hoveredNode, setHoveredNode] = React.useState('');
-    const debouncedHoveredNode = useDebounce(hoveredNode, 40);
+    //const [hoveredNode, setHoveredNode] = React.useState('');
+    //const debouncedHoveredNode = useDebounce(hoveredNode, 40);
 
     const handleToggle = (event:any, nodeIds:string[]) => {
         setExpanded(nodeIds);
@@ -51,16 +53,6 @@ const CirclePack:React.FC<{
             .domain([0, 5])
             .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
             .interpolate(d3.interpolateHsl);
-            
-    var tooltip = d3
-            .select("#d3-data-vis")
-            .append("div")
-            .style("position", "absolute")
-            .style("z-index", "10")
-            .style("border-width", "2px")
-            .style("border-radius", "3px")
-            .style("padding", "2px")
-            .style("visibility", "hidden");
 
     const svg = d3
             .select(ref.current)
@@ -69,34 +61,88 @@ const CirclePack:React.FC<{
             .attr('padding-left', 10)
             .attr("viewBox", `${padding} ${padding} ${height+padding*2} ${width+padding*2}`);
 
+    var tooltip = d3
+            .select(ref_tooltip.current)
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px");
+
 
     React.useEffect(()=>{
-        d3.json(`${process.env.PUBLIC_URL}/result.json`)
-        .then((data)=>{     
-            
+        // d3.json(`${process.env.PUBLIC_URL}/result.json`)
+        // .then((data)=>{     
+        //     setData(data);
+        // })
+        GetPathwayCirclePack((records) => {
+            var data: {[key: string]: any} = {
+                "name": "root",
+                "description": "root",
+                "children": []
+            };
+            const dict:{[key:string]:string}={};
+            records.forEach((record) => {
+                const nodes = record.get(0);
+                const size = record.get(1);
+                let cur = data;
+                nodes.forEach((node: any, idx: number) => {
+                    
+                    if(cur['children'] == undefined){
+                        cur['children'] = [];
+                        if(cur['size'] != undefined){
+                            delete cur['size'];
+                        }
+                    }
+                    const id = node.properties.id;
+                    dict[id] = node.properties.name;
+                    let next = cur['children'].findIndex((x: any)=>x['name'] == id);
+                    if(next == -1){
+                        cur['children'].push({
+                            'name': id,
+                            'description': node.properties.name,
+                        })
+                        next = cur['children'].length - 1;
+                    }
+                    cur = cur['children'][next];
+                    if(idx == nodes.length - 1 && cur['children'] == undefined){
+                        cur['size'] = Math.min(Math.max(size, 15), 40);
+                    
+                    }
+                })
+                
+            }) 
+            console.log(data);
             setData(data);
+            setNames(dict);
         })
 
-        fetch(`${process.env.PUBLIC_URL}/pathway_links.json`)
-        .then((res)=>res.json())
-        .then((data)=>setLinks(data));
-        fetch(`${process.env.PUBLIC_URL}/pathway_names.csv`)
-        .then((res)=>res.text())
-        .then((data)=>{
-            const dict:{[key:string]:string}={};
-            const lines = data.split('\n').slice(1);
-            for(let i=0; i<lines.length; i++){
-                const line:string[] = lines[i].split(',');
-                dict[line[0]]=line[1];
-            }
-            setNames(dict);
-        });
+        // fetch(`${process.env.PUBLIC_URL}/pathway_links.json`)
+        // .then((res)=>res.json())
+        // .then((data)=>setLinks(data));
+        // fetch(`${process.env.PUBLIC_URL}/pathway_names.csv`)
+        // .then((res)=>res.text())
+        // .then((data)=>{
+        //     const dict:{[key:string]:string}={};
+        //     const lines = data.split('\n').slice(1);
+        //     for(let i=0; i<lines.length; i++){
+        //         const line:string[] = lines[i].split(',');
+        //         dict[line[0]]=line[1];
+        //     }
+        //     setNames(dict);
+        // });
 
     }, [])
 
 
     React.useEffect(()=>{
+        if(!open) return;
         if(!data) return;
+
+        
+
         var root = d3.hierarchy(data)
                 .sum(function(d:any) { return d.size; })
                 .sort(function(a:any, b:any) { return b.value - a.value; });
@@ -114,6 +160,33 @@ const CirclePack:React.FC<{
             .attr('fill', 'red');
         root = pack(root);
         focus = root;
+
+        
+        var mouseover = function(event: any, d: any) {
+            if(d.data.name=='root'){
+                return
+            }
+            tooltip
+              .style("opacity", 1)
+              .style('visibility','visible')
+              .style('position', 'absolute')
+              .html('<u>' + d.data.name + '</u>' + "<br>" + d.data.description)
+              .style("left", (d3.pointer(event)[0]) + "px")
+              .style("top", (d3.pointer(event)[1]) + "px")
+        }
+
+        var mousemove = function(event: any, d: any) {
+            console.log(d, event);
+            tooltip
+            .html('<u>' + d.data.name + '</u>' + "<br>" + d.data.description)
+            .style("left", (d3.pointer(event)[0]) + "px")
+            .style("top", (d3.pointer(event)[1]) + "px")
+        }
+        var mouseleave = function(event: any, d:any) {
+            tooltip
+              .style("opacity", 0)
+        }
+
         var node = g.selectAll(".node")
                     .data(root.descendants())
                     .enter().append("g")
@@ -123,23 +196,29 @@ const CirclePack:React.FC<{
                     .attr("transform", function(d:any) {return "translate(" + d.x + "," + d.y + ")"; })
        
         setNodes(node);
-        var timeout:any = null;
+        
         node.append("circle")
             .attr("r", function(d:any) { return d.r; })
-            .on("click", (event:any, d:any)=> {
-                svg
-                .transition()
-                .duration(1000)
-                .attr("viewBox", 
-                `${d.x - d.r - 1} ${d.y - d.r - 1} ${d.r * 2 + padding*2} ${d.r * 2 + padding*2}`);
-            })
-            .on('mouseover', (event: any, d:any)=>{
-                tooltip
-                .text(d.data.name)
-                .style("visibility", "visible");
-                console.log(tooltip);
-                setHoveredNode(d.data.name);
-                showRels(d);
+            // .on("click", (event:any, d:any)=> {
+            //     svg
+            //     .transition()
+            //     .duration(1000)
+            //     .attr("viewBox", 
+            //     `${d.x - d.r - 1} ${d.y - d.r - 1} ${d.r * 2 + padding*2} ${d.r * 2 + padding*2}`);
+            // })
+            .on("mouseover", mouseover) // What to do when hovered
+            .on("mousemove", mousemove)
+            .on("mouseleave", mouseleave)
+            .on('click', (event: any, d:any)=>{
+                
+                //setHoveredNode(d.data.name);
+                GetPathwayLinks(d.data.name, (x)=>{
+                    showRels(d, x)
+                    setExpanded([...x, d.data.name, 'root']);
+                    setSelected([...x, d.data.name]);
+                })
+                
+                //showRels(d);
             })
             .on("mousemove", function(event: any, d: any){
                 tooltip
@@ -170,7 +249,7 @@ const CirclePack:React.FC<{
                         return `${d.data.name.substring(0,6)}\n${d.data.name.substring(6)}`
                     });
 
-        const showRels=(d: any)=>{
+        const showRels=(d: any, neighbours: string[])=>{
             const activeNode = d;
             
             g
@@ -179,7 +258,7 @@ const CirclePack:React.FC<{
             g
             .selectAll("path")
             .data(node.filter((o:any)=>{
-                return links[d.data.name]?.includes(o.data.name)
+                return neighbours.includes(o.data.name)
             }))
             .enter()
             .append("svg:path")
@@ -198,7 +277,7 @@ const CirclePack:React.FC<{
             .attr('marker-end', 'url(#Cross)');
         }
             
-    }, [data, links, open])
+    }, [data, open])
 
 
     const renderTree = (nodes: any) => (
@@ -211,25 +290,25 @@ const CirclePack:React.FC<{
 
     const listView = React.useMemo(()=>{
         console.log(data?.name);
-        if(!names||!links||!data){
+        if(!names||!data){
             return <></>;
         }
         return renderTree(data);
-    }, [names, links, data]);
+    }, [names, data]);
 
     
 
 
-    React.useEffect(()=>{
-        if(!debouncedHoveredNode||!names||!links||debouncedHoveredNode=='root'){
-            return;
-        }
-        const neighbors = links[debouncedHoveredNode]
-        if(!neighbors||neighbors.length==0) return;
-        console.log(neighbors, debouncedHoveredNode);
-        setExpanded([...neighbors, debouncedHoveredNode, 'root']);
-        setSelected([...neighbors, debouncedHoveredNode]);
-    }, [debouncedHoveredNode, names, links])
+    // React.useEffect(()=>{
+    //     if(!debouncedHoveredNode||!names||debouncedHoveredNode=='root'){
+    //         return;
+    //     }
+    //     const neighbors = links[debouncedHoveredNode]
+    //     if(!neighbors||neighbors.length==0) return;
+    //     console.log(neighbors, debouncedHoveredNode);
+    //     setExpanded([...neighbors, debouncedHoveredNode, 'root']);
+    //     setSelected([...neighbors, debouncedHoveredNode]);
+    // }, [debouncedHoveredNode, names, links])
 
 
 
@@ -259,6 +338,7 @@ const CirclePack:React.FC<{
                 <Grid xs={8}>
                     <div id='#d3-data-vis'>
                         <svg ref={ref} style={{paddingLeft: '30px'}}></svg>
+                        <div ref={ref_tooltip}></div>
                     </div>
                 </Grid>
                 <Grid xs={4} direction='column' sx={{'paddingTop': '10px'}}>
