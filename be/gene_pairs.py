@@ -14,7 +14,7 @@ def get_gene_pairs(genes, cancer_type, K, M=2, read_results = True):
         df = df.loc[(df.pdist_oncogenes - df.distance).sort_values(ascending=True, na_position='last').index]
         # df = df.sort_values(by='pdist_oncogenes', ascending=False)
         # df = df[(df['pdist'] > 0.2) & (df['pdist'] < 0.4)]
-        print(df[['gene1','gene2','pdist_oncogenes','distance']][:K])
+        # print(df[['gene1','gene2','pdist_oncogenes','distance']][:K])
         return [list([x[0], x[1], round(x[2],3), round(x[3],3)]) for x in list(df[['gene1','gene2','pdist_oncogenes','distance']][:K].values)]
 
     return generate_target_sets(genes, cancer_type, K, M)

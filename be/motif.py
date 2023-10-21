@@ -21,11 +21,11 @@ class MotifFinding:
         for p, nodes in data['pathway'].items():
             self.pathway_groups.append((p, nodes))
         self.data = data
-        print(self.pathway_groups)
+        # print(self.pathway_groups)
 
         self.adj = adj
         self.G = nx.Graph(adj)
-        print(self.G.nodes)
+        # print(self.G.nodes)
         t = time.time()
         self.pos = calc_posotion(self.G)
         tt = time.time()
@@ -545,22 +545,46 @@ def calc_posotion(G, x_scale = 1400, y_scale = 1200):
     return pos
 
 
-def simplify_graph(nodes, edges, groups_to_collapse):
+def simplify_graph(nodes, edges, groups, exclusion_set, level):
+    print("simplify graph")
     G = nx.Graph()
     for node in nodes:
         G.add_node(node)
     for edge in edges:
         G.add_edge(edge['data']['source'], edge['data']['target'], category = edge['data']['category'])
 
-    for group in groups_to_collapse:
-        parent = group[0]
-        children = group[1]
-        child_nodes = sorted(list(children))
+    e = len(G.edges)
+    v = len(G.nodes)
+    motif_sz = {}
+    cog = e+2*e/(v*(v-1))+max(e-3*v+6, 0)
+    for parent, group in groups.items():
+        children = group['data']['children']
+        mtype = group['data']['type']
+        if any([i in exclusion_set for i in children]) and 'R-HSA' in mtype:
+            continue
+        # if any([i in exclusion_set or i not in G.nodes for i in children]):
+        #     continue
+
+        free_children = [i for i in children if i not in exclusion_set and i in G.nodes]
+
+        if( len(free_children) < 3 and mtype == 'clique') or (len(free_children) < 2 and mtype in ['connector', 'fan']) :
+            # print("children: ", children)
+            # print("in exclusion set: ", [i for i in children if i in exclusion_set])
+            # print("not collapsed: ", [i for i in children if i not in G.nodes])
+            continue
+        child_nodes = sorted(list(free_children))
+        print('++collapsed',parent, ': ', child_nodes, "original length: ", len(children))
         for i in child_nodes[1:]:
-
             G = nx.contracted_nodes(G, child_nodes[0], i)
-
+        motif_sz[parent] = [len(child_nodes), child_nodes]
         G = nx.relabel_nodes(G, {child_nodes[0]: parent})
+        ue = len(G.edges)
+        uv = len(G.nodes)
+        ucog = ue + 2 * ue / (uv * (uv - 1)) + max(ue - 3 * uv + 6, 0)
+        ratio = round(math.log(ucog) / math.log(cog), 3)
+        print(ratio)
+        if round(math.log(ucog) / math.log(cog), 3) < level:
+            break
     # pos = nx.planar_layout(G)
 
     elements = []
@@ -577,9 +601,21 @@ def simplify_graph(nodes, edges, groups_to_collapse):
     pos = calc_posotion(G)
 
     for node in G.nodes():
+        children = []
+        if node not in nodes:
+            q = motif_sz[node][1]
+            while q:
+                curr = q.pop()
+                if curr in nodes:
+                    children.append(curr)
+                else:
+                    q = q + motif_sz[curr][1]
+
         elements.append({
             "data": {
                 "id": node,
+                "size": 1 if node in nodes else len(children),
+                "children": children
             },
             "position": {
                 "x": pos[node][0],
@@ -587,6 +623,7 @@ def simplify_graph(nodes, edges, groups_to_collapse):
             },
             "group": "nodes",
             "classes": "nodeIcon" if node in nodes else "groupIcon",
+
         })
 
     # print(len(G.nodes()), len(G.edges()), ex)

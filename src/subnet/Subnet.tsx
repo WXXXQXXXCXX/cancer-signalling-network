@@ -143,7 +143,8 @@ const Subnet: FC = () => {
           container: ref.current,
           minZoom: 0.1,
           maxZoom: 3,
-
+          pixelRatio: 1.5,
+          hideEdgesOnViewport: true,
           layout: {
             name: 'preset',
     
@@ -165,7 +166,7 @@ const Subnet: FC = () => {
                   if(!node){
                     node = data['groups'][id]
                   }
-                  const size = node['data']['size']
+                  const size = ele.data('size')
                   return (size/nodes.length*56+28) + 'px';
                 },
                 "height": (ele: any) => {
@@ -174,7 +175,7 @@ const Subnet: FC = () => {
                   if(!node){
                     node = data['groups'][id]
                   }
-                  const size = node['data']['size']
+                  const size = ele.data('size')
                   return (size/nodes.length*56+28) + 'px';
                 },
                 "background-opacity": 1,
@@ -238,6 +239,7 @@ const Subnet: FC = () => {
         
         cy.nodeHtmlLabel(node_html())
         // cy.panzoom();
+
         cy.filter('node').forEach((t: any) => {
           if(!t.hasClass('nodeIcon')){
             bindPopper(t);
@@ -245,23 +247,27 @@ const Subnet: FC = () => {
           
         })
 
+        if(startNode.length > 0 && endNode.length > 0){
+          var start = cy.$(`#${startNode}`)
+          var end = cy.$(`#${endNode}`)
+          var dijkstra = cy.elements().dijkstra(start, function(edge: any){
+            return 1;
+          });
+          
+          var path = dijkstra.pathTo(end);
+          console.log(path);
+          cy.elements().not(path).addClass('faded');
+          path.addClass('highlighted');
+        }
+        
+
         cy.on("click", "node", function (e: cytoscape.EventObject) {
           const target_node = e.target
           if(target_node.hasClass('groupIcon')){
-            const children: any[] = data['groups'][target_node.id()]['data']['children'];
-          
-            let new_target: string[] = [];
+            const new_target: any[] = target_node.data('children');
+            console.log('children: ', new_target);
+            // let new_target: string[] = [];
             let new_elements: any[] = [];
-            let q = [...children]
-            while(q.length > 0){
-              const cur = q.shift()
-              if(cur && data['groups'][cur] != undefined){
-                const new_children: string[] = data['groups'][cur]['data']['children'];
-                q = q.concat(new_children);  
-              } else {
-                new_target.push(cur)
-              }
-            }
   
             data['edges'].forEach((edge) => {
               const src = edge['data']['source'];
@@ -273,8 +279,6 @@ const Subnet: FC = () => {
             new_elements = new_elements.concat(new_target.map(x =>data['nodes'][x]));
             setOpen(true);
             setSubgraph(new_elements);
-            
-        
             return
           }
 
@@ -320,45 +324,51 @@ const Subnet: FC = () => {
         return
       }
       CY.elements().removeClass('faded highlighted')
-      console.log(startNode, endNode, CY)
       var start = CY.$(`#${startNode}`)
       var end = CY.$(`#${endNode}`)
       console.log(start, end)
-      const nodes = data['nodes']
-      if(start.length == 0){
-        var cur = nodeParent[startNode];
-        console.log(nodes, cur)
-        while(start.length==0 && cur){
-          start =  CY.$(`#${cur}`);
-          cur = nodeParent[cur];
-          console.log('find end, ', cur);
-        }
+      // const nodes = data['nodes']
+      if(start.length == 0 || end.length == 0){
+        expand_collapse(sliderValue);
+        
       }
+      // if(start.length == 0){
+      //   var cur = nodeParent[startNode];
+      //   console.log(nodes, cur)
+      //   while(start.length==0 && cur){
+      //     start =  CY.$(`#${cur}`);
+      //     cur = nodeParent[cur];
+      //     console.log('find end, ', cur);
+      //   }
+      // }
 
-      if(end.length==0){
-        var cur = nodeParent[endNode];
-        console.log(nodes, cur)
-        while(end.length == 0 && cur){
-          end =  CY.$(`#${cur}`);
-          cur = nodeParent[cur];
-          console.log('find end, ', cur);
-        }
+      // if(end.length==0){
+      //   var cur = nodeParent[endNode];
+      //   console.log(nodes, cur)
+      //   while(end.length == 0 && cur){
+      //     end =  CY.$(`#${cur}`);
+      //     cur = nodeParent[cur];
+      //     console.log('find end, ', cur);
+      //   }
+      // }
+
+      // console.log(start, end);
+      // if(!start || !end || start.length == 0 || end.length == 0){
+      //   console.log(`cannot find node start: ${startNode}, end: ${endNode}`);
+      //   return
+      // }
+      else{
+        var dijkstra = CY.elements().dijkstra(start, function(edge: any){
+          return 1;
+        });
+  
+        var path = dijkstra.pathTo(end);
+            console.log(path);
+            CY.elements().not(path).addClass('faded');
+            path.addClass('highlighted');
       }
-
-      console.log(start, end);
-      if(!start || !end){
-        console.log(`cannot find node start: ${startNode}, end: ${endNode}`);
-        return
-      }
-
-      var dijkstra = CY.elements().dijkstra(start, function(edge: any){
-        return 1;
-      });
       
-      var path = dijkstra.pathTo(end);
-      console.log(path);
-      CY.elements().not(path).addClass('faded');
-      path.addClass('highlighted');
+      
       
     }
 
@@ -382,7 +392,9 @@ const Subnet: FC = () => {
             if(!data){
               return;
             }
-            const size = data['groups'][target.id()]['data']['size']
+            const size = target.data('size')
+            // console.log(target.data('size'))
+            //const grp = cur.find(x => x['classes'] == 'groupIcon' && x['data']['id'] == target.id())
             if(type.includes('R-HSA')){
               txt += 
               `Type: Pathway<br>Name: ${type}<br>Size: ${size}`;
@@ -422,7 +434,7 @@ const Subnet: FC = () => {
       })
     }
   
-    const expand_collapse = (event: React.SyntheticEvent | Event, v: number | number[]) => {
+    const expand_collapse = (v: number | number[]) => {
       if(requestRef.current){
         requestRef.current.abort();
       }
@@ -435,17 +447,23 @@ const Subnet: FC = () => {
       if(!data){
         return;
       }
-      const levels = data['levels']
-      const nodes_to_collapse = []
+      // const levels = data['levels']
+      // const nodes_to_collapse = []
       const groups = data['groups']
-      for(let i=0; i<levels.length; i++){
-        const node = levels[i][0]
+      // for(let i=0; i<levels.length; i++){
+      //   const node = levels[i][0]
         
-        if(levels[i][1]>v){
-          nodes_to_collapse.push([node, groups[node]['data']['children']])
-        } 
+      //   if(levels[i][1]>v){
+      //     nodes_to_collapse.push([node, groups[node]['data']['children']])
+      //   } 
+      // }
+      const exclusion_set: string[] = [];
+      if(startNode != null && startNode.length > 0){
+        exclusion_set.push(startNode);
       }
-
+      if(endNode != null && endNode.length > 0){
+        exclusion_set.push(endNode);
+      }
       fetch(
         `${BASE_URL}/simplify`,{
           method: 'POST',
@@ -457,7 +475,9 @@ const Subnet: FC = () => {
           body: JSON.stringify({
             "nodes": nodes,
             "edges": data['edges'],
-            "groups": nodes_to_collapse,
+            "groups": groups,
+            "exclusion_set": exclusion_set,
+            "level": v,
           }),
           signal: controller.signal,
         },
@@ -534,7 +554,7 @@ const Subnet: FC = () => {
           step={0.05} 
           aria-label="Default" 
           valueLabelDisplay="auto"
-          onChangeCommitted={expand_collapse} />
+          onChangeCommitted={(e, v)=>expand_collapse(v)} />
         </div>
         <GroupExpandModal
         open={open}
